@@ -1,0 +1,67 @@
+-- LeetCode Problem Link:
+-- https://leetcode.com/problems/rising-temperature/
+
+-- Problem Name: Rising Temperature
+
+/*
+📌 Beginner-Friendly Problem Explanation
+You’re given a table `Weather(id, recordDate, temperature)` with one row per day.
+Find the IDs of the dates where the temperature is higher than the temperature on the
+previous day (exactly 1 day earlier).
+
+Key facts:
+- Each date appears at most once.
+- Return only the `id` of the dates that are warmer than “yesterday”.
+- Result can be in any order.
+
+📊 Example Input
+Weather
++----+------------+-------------+
+| id | recordDate | temperature |
++----+------------+-------------+
+|  1 | 2025-08-01 |     30      |
+|  2 | 2025-08-02 |     35      |
+|  3 | 2025-08-3  |     28      |
+|  4 | 2025-08-04 |     33      |
++----+------------+-------------+
+
+Step-by-step comparison
+- 2025-08-02 (35) vs 2025-08-01 (30) → higher → keep id = 2
+- 2025-08-03 (28) vs 2025-08-02 (35) → lower → discard
+- 2025-08-04 (33) vs 2025-08-03 (28) → higher → keep id = 4
+
+✅ Expected Output
++----+
+| id |
++----+
+|  2 |
+|  4 |
++----+
+
+🧠 Step-by-Step Approach
+1) Treat the table twice (self-join): one copy as “today” (alias `a`) and one as “yesterday” (alias `b`).
+2) Match rows where `a.recordDate` is exactly 1 day after `b.recordDate`.
+3) Keep only those matches where `a.temperature > b.temperature`.
+4) Return `a.id` (the id of the “today” row).
+
+❓ Why we use JOIN here
+- We must compare each day to the row from exactly one day earlier. Those two rows live
+  in the same table. A self-join lets us line up “today” with “yesterday” on a single row,
+  so we can compare their temperatures easily.
+- Without a JOIN (or a window function like LAG, which isn’t always available),
+  SQL can’t “look at another row” from the same table in a straightforward way.
+  The self-join creates that pairwise comparison: `a` (today) ↔ `b` (yesterday).
+- The condition `DATEDIFF(a.recordDate, b.recordDate) = 1` guarantees the dates are consecutive.
+  Then the WHERE clause checks the temperature increase.
+*/
+
+-- Your Query with Detailed Inline Comments
+SELECT
+    a.id                              -- ✅ Return the id of the warmer (today) date
+FROM Weather AS a                     -- a = "today" row
+JOIN Weather AS b                     -- b = "yesterday" row
+    ON DATEDIFF(a.recordDate, b.recordDate) = 1
+                                               -- DATEDIFF(x, y) returns (x - y) in days in MySQL.
+                                               -- = 1 means: a.recordDate is exactly one day after b.recordDate.
+WHERE
+    a.temperature > b.temperature;    -- Keep only cases where today is warmer than yesterday
