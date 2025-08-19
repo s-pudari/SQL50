@@ -1,0 +1,121 @@
+-- LeetCode Problem Link:
+-- https://leetcode.com/problems/student-attendance-in-examinations/
+
+-- Problem Name: Student Attendance in Examinations
+
+/*
+📌 Beginner-Friendly Problem Explanation:
+We are given 3 tables:
+1. Students → student_id and student_name
+2. Subjects → list of subjects in school
+3. Examinations → records of students attending subject exams (may contain duplicates)
+
+Task:
+- For every student and every subject, find how many times the student attended that exam.
+- If a student never attended a subject exam, the count should be 0.
+- Output must include ALL combinations of students × subjects.
+
+---
+
+📊 Example Input:
+
+Students:
++------------+--------------+
+| student_id | student_name |
++------------+--------------+
+| 1          | Alice        |
+| 2          | Bob          |
+| 13         | John         |
+| 6          | Alex         |
++------------+--------------+
+
+Subjects:
++--------------+
+| subject_name |
++--------------+
+| Math         |
+| Physics      |
+| Programming  |
++--------------+
+
+Examinations:
++------------+--------------+
+| student_id | subject_name |
++------------+--------------+
+| 1          | Math         |
+| 1          | Physics      |
+| 1          | Programming  |
+| 2          | Programming  |
+| 1          | Physics      |
+| 1          | Math         |
+| 13         | Math         |
+| 13         | Programming  |
+| 13         | Physics      |
+| 2          | Math         |
+| 1          | Math         |
++------------+--------------+
+
+---
+
+Step-by-step Approach:
+1. We must generate ALL possible student–subject pairs.
+   - Use **CROSS JOIN** between `Students` and `Subjects` (produces a full grid).
+   - Example: Alice × (Math, Physics, Programming).
+2. Then, check the `Examinations` table to see how many times each pair appears.
+   - Use **LEFT JOIN** to match exams with the pairs.
+   - If no match exists, it returns NULL (count will be 0).
+3. Use `COUNT(e.subject_name)` to count exam attendance.
+4. Group by student and subject.
+5. Order results by student_id, then subject_name.
+
+---
+
+✅ Expected Output:
++------------+--------------+--------------+----------------+
+| student_id | student_name | subject_name | attended_exams |
++------------+--------------+--------------+----------------+
+| 1          | Alice        | Math         | 3              |
+| 1          | Alice        | Physics      | 2              |
+| 1          | Alice        | Programming  | 1              |
+| 2          | Bob          | Math         | 1              |
+| 2          | Bob          | Physics      | 0              |
+| 2          | Bob          | Programming  | 1              |
+| 6          | Alex         | Math         | 0              |
+| 6          | Alex         | Physics      | 0              |
+| 6          | Alex         | Programming  | 0              |
+| 13         | John         | Math         | 1              |
+| 13         | John         | Physics      | 1              |
+| 13         | John         | Programming  | 1              |
++------------+--------------+--------------+----------------+
+
+Why this output?
+- Alice took Math 3 times, Physics 2 times, Programming 1 time.
+- Bob: Math once, Physics never, Programming once.
+- Alex: never took any exam → all 0.
+- John: took each subject once.
+
+---
+
+🧠 Why we use JOIN here:
+- **CROSS JOIN** ensures every student is paired with every subject (even if exam never taken).
+- **LEFT JOIN** with Examinations ensures we still keep those pairs, but with NULL if no exam record exists.
+- Without CROSS JOIN, we’d miss students who didn’t take exams for some subjects.
+- Without LEFT JOIN, students without exam records would be excluded completely.
+
+*/
+
+-- Your Query with Detailed Inline Comments
+SELECT 
+    s.student_id,                        -- Student ID
+    s.student_name,                      -- Student Name
+    sub.subject_name,                    -- Subject Name
+    COUNT(e.subject_name) AS attended_exams  -- Count how many times exam taken (NULLs ignored)
+FROM Students AS s
+CROSS JOIN Subjects AS sub               -- Generate all possible student-subject pairs
+LEFT JOIN Examinations AS e              -- Match actual exam records
+    ON s.student_id = e.student_id 
+   AND sub.subject_name = e.subject_name -- Ensure subject also matches
+GROUP BY 
+    s.student_id, s.student_name, sub.subject_name  -- Group by each student-subject pair
+ORDER BY 
+    s.student_id, sub.subject_name;      -- Sort by student, then subject
