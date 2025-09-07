@@ -1,0 +1,83 @@
+-- LeetCode Problem Link:
+-- https://leetcode.com/problems/confirmation-rate/
+
+-- Problem Name: Confirmation Rate
+
+-- 📂 Table Schemas
+-- Table: Signups
+-- +----------------+----------+
+-- | Column Name    | Type     |
+-- +----------------+----------+
+-- | user_id        | int      |
+-- | time_stamp     | datetime |
+-- +----------------+----------+
+-- user_id is the column of unique values for this table.
+-- Each row contains info about the signup time for the user.
+
+-- Table: Confirmations
+-- +----------------+----------+
+-- | Column Name    | Type     |
+-- +----------------+----------+
+-- | user_id        | int      |
+-- | time_stamp     | datetime |
+-- | action         | ENUM     |
+-- +----------------+----------+
+-- (user_id, time_stamp) is the primary key.
+-- action is ENUM('confirmed','timeout').
+-- Each row = user requested confirmation → confirmed OR expired(timeout).
+
+/*
+📌 Beginner-Friendly Explanation
+We need to calculate confirmation_rate for each user:
+    confirmation_rate = (# confirmed) / (total requests)
+If user never requested → rate = 0. Round to 2 decimals.
+*/
+
+/*
+🧭 Step-by-Step Approach
+1) Start from Signups (all users must appear).
+2) LEFT JOIN Confirmations to include users who made no requests.
+3) COUNT(b.action) → total requests.
+4) SUM(b.action='confirmed') → confirmed count.
+5) CASE: if total=0 then 0, else confirmed/total.
+6) ROUND to 2 decimals.
+*/
+
+/*
+❓ Why we use JOIN
+- Need both Signups (all users) and Confirmations (requests).
+- LEFT JOIN ensures users with no requests still appear (rate = 0.00).
+- INNER JOIN would remove those users (wrong).
+*/
+
+/*
+📊 Input / Output Example
+Input:
+Signups → {3,7,2,6}
+Confirmations:
+  user 3 → 2 timeouts → 0/2 = 0.00
+  user 7 → 3 confirmed → 3/3 = 1.00
+  user 2 → 1 confirmed + 1 timeout → 1/2 = 0.50
+  user 6 → no rows → 0/0 → 0.00
+Output:
+| user_id | confirmation_rate |
+| 6       | 0.00              |
+| 3       | 0.00              |
+| 7       | 1.00              |
+| 2       | 0.50              |
+*/
+
+-- ✅ Final SQL Query
+SELECT 
+    a.user_id,
+    ROUND(
+        CASE
+            WHEN COUNT(b.action) = 0 THEN 0
+            ELSE SUM(b.action = 'confirmed') / COUNT(b.action)
+        END,
+        2 -- round to 2 decimals
+    ) AS confirmation_rate
+FROM Signups AS a
+LEFT JOIN Confirmations AS b
+    ON a.user_id = b.user_id       -- join to fetch user’s confirmation requests
+GROUP BY a.user_id;                -- aggregate per user
