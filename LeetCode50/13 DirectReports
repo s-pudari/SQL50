@@ -1,0 +1,80 @@
+-- LeetCode Problem Link:
+-- https://leetcode.com/problems/managers-with-at-least-5-direct-reports/
+
+-- Problem Name: Managers with at Least Five Direct Reports
+
+-- 📂 Table Schema
+-- Table: Employee
+-- +-------------+---------+
+-- | Column Name | Type    |
+-- +-------------+---------+
+-- | id          | int     |  -- employee’s unique ID
+-- | name        | varchar |  -- employee name
+-- | department  | varchar |  -- department they belong to
+-- | managerId   | int     |  -- ID of their manager (nullable)
+-- +-------------+---------+
+-- id is the PRIMARY KEY.
+-- managerId is a FOREIGN KEY that points to another employee’s id.
+-- If managerId is NULL → this employee has no manager.
+
+ /*
+ 📌 Beginner-Friendly Explanation
+We need to find all employees who are **managers with at least 5 direct reports**.  
+A direct report = another employee whose managerId matches this manager’s id.  
+So the task: count how many employees report to each manager, and keep only those with count ≥ 5.
+ */
+
+ /*
+ 🧭 Step-by-Step Approach
+ 1) We want to compare managers and employees.
+ 2) Join Employee table to itself:
+    - "a" = manager
+    - "b" = direct report
+    - Condition: a.id = b.managerId
+ 3) This creates pairs (manager, report).
+ 4) Group by manager’s id to count how many reports each manager has.
+ 5) Use HAVING COUNT(*) >= 5 to keep only those with 5+ direct reports.
+ 6) Select the manager’s name for the output.
+ */
+
+ /*
+ ❓ Why we use JOIN
+- We join Employee with itself because we need to **relate managers to their employees**.
+- Manager is stored in the same table as employees (self-relation).
+- Without JOIN, we can’t directly count how many employees report to each manager.
+ */
+
+ /*
+ 📊 Input / Output Example
+ Input:  
+ Employee table:
+ +-----+-------+------------+-----------+
+ | id  | name  | department | managerId |
+ +-----+-------+------------+-----------+
+ | 101 | John  | A          | null      |
+ | 102 | Dan   | A          | 101       |
+ | 103 | James | A          | 101       |
+ | 104 | Amy   | A          | 101       |
+ | 105 | Anne  | A          | 101       |
+ | 106 | Ron   | B          | 101       |
+ +-----+-------+------------+-----------+
+
+ - John (id=101) is the manager of Dan, James, Amy, Anne, Ron → 5 direct reports.
+ - Others don’t have 5 reports.
+
+ Output:
+ +------+
+ | name |
+ +------+
+ | John |
+ +------+
+ */
+
+-- ✅ Final SQL Query
+SELECT 
+    a.name                   -- manager’s name
+FROM Employee AS a
+JOIN Employee AS b
+    ON a.id = b.managerId    -- match manager with their direct reports
+GROUP BY a.id                -- group by manager to count reports
+HAVING COUNT(*) >= 5;        -- keep only managers with at least 5 reports
