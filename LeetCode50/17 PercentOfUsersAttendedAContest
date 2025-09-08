@@ -1,0 +1,75 @@
+/* 
+LeetCode Link: https://leetcode.com/problems/percentage-of-users-attended-a-contest/
+
+Problem Name: Percentage of Users Registered in Each Contest
+
+Beginner-Friendly Explanation:
+We need to calculate what percentage of total users registered for each contest.
+- "Users" table tells us how many total users exist.
+- "Register" table shows which users registered for which contests.
+We must count distinct users per contest and divide by the total number of users.
+
+Step-by-Step Approach:
+1. Use COUNT(DISTINCT user_id) for each contest to know how many unique users registered.
+2. Find the total number of users from the Users table.
+3. Calculate percentage = (registered_users / total_users) * 100.
+4. ROUND the result to 2 decimal places.
+5. Sort results by percentage in descending order.
+   - If percentages are the same, order by contest_id ascending.
+
+Why JOIN is NOT needed here:
+- We don’t actually need user_name from Users table.
+- We only need total count of users, which we can fetch directly in a subquery.
+
+Input Example:
+Users:
++---------+-----------+
+| user_id | user_name |
++---------+-----------+
+| 6       | Alice     |
+| 2       | Bob       |
+| 7       | Alex      |
++---------+-----------+
+
+Register:
++------------+---------+
+| contest_id | user_id |
++------------+---------+
+| 215        | 6       |
+| 209        | 2       |
+| 208        | 2       |
+| 210        | 6       |
+| 208        | 6       |
+| 209        | 7       |
+| 209        | 6       |
+| 215        | 7       |
+| 208        | 7       |
+| 210        | 2       |
+| 207        | 2       |
+| 210        | 7       |
++------------+---------+
+
+Output:
++------------+------------+
+| contest_id | percentage |
++------------+------------+
+| 208        | 100.0      |
+| 209        | 100.0      |
+| 210        | 100.0      |
+| 215        | 66.67      |
+| 207        | 33.33      |
++------------+------------+
+
+SQL Query with Explanation:
+- COUNT(DISTINCT b.user_id) → unique participants in each contest
+- (SELECT COUNT(*) FROM Users) → total users
+- ROUND(..., 2) → round to 2 decimals
+- ORDER BY percentage DESC, contest_id ASC → sorting per problem
+*/
+SELECT b.contest_id,  
+       ROUND(
+         COUNT(DISTINCT b.user_id) * 100.0 / (SELECT COUNT(*) FROM Users), 2
+       ) AS percentage
+FROM Register AS b
+GROUP BY b.contest_id
+ORDER BY percentage DESC, b.contest_id ASC;
