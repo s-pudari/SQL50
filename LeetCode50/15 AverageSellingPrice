@@ -1,0 +1,107 @@
+-- LeetCode Problem Link:
+-- https://leetcode.com/problems/average-selling-price/
+
+-- Problem Name: Average Selling Price
+
+-- 📂 Table Schemas
+-- Table: Prices
+-- +---------------+---------+
+-- | Column Name   | Type    |
+-- +---------------+---------+
+-- | product_id    | int     | -- product ID
+-- | start_date    | date    | -- start of the price period
+-- | end_date      | date    | -- end of the price period
+-- | price         | int     | -- product price in that period
+-- +---------------+---------+
+-- (product_id, start_date, end_date) is the PRIMARY KEY.
+-- Each product has non-overlapping price periods.
+
+-- Table: UnitsSold
+-- +---------------+---------+
+-- | Column Name   | Type    |
+-- +---------------+---------+
+-- | product_id    | int     | -- product ID
+-- | purchase_date | date    | -- purchase date
+-- | units         | int     | -- units sold
+-- +---------------+---------+
+-- Each row = how many units of a product were sold on a date.
+
+ /*
+ 📌 Beginner-Friendly Explanation
+We need to calculate the **average selling price** for each product:
+    average_price = (total revenue) / (total units sold)
+
+- Total revenue = SUM(units × price)
+- Total units = SUM(units)
+- If no units were sold → average_price = 0
+- Round the result to 2 decimal places.
+ */
+
+ /*
+ 🧭 Step-by-Step Approach
+ 1) Start from Prices (we know the valid price ranges for each product).
+ 2) JOIN with UnitsSold to link sales with the correct price period:
+      - condition: product_id matches
+      - AND purchase_date BETWEEN start_date AND end_date
+ 3) For each product, compute:
+      - revenue = SUM(units × price)
+      - units_sold = SUM(units)
+ 4) Divide revenue / units_sold → average_price.
+ 5) Handle case when units_sold = 0 → set average_price = 0.
+ 6) Round result to 2 decimals.
+ 7) Group by product_id.
+ */
+
+ /*
+ ❓ Why we use JOIN
+- We must connect sales (UnitsSold) with the correct price period (Prices).
+- The same product can have different prices in different time ranges.
+- JOIN with the date condition ensures we pick the right price for each sale.
+- LEFT JOIN ensures even products with no sales still appear with average_price = 0.
+ */
+
+ /*
+ 📊 Input / Output Example
+ Input:
+ Prices:
+ | product_id | start_date | end_date   | price |
+ |------------|------------|------------|-------|
+ | 1          | 2019-02-17 | 2019-02-28 | 5     |
+ | 1          | 2019-03-01 | 2019-03-22 | 20    |
+ | 2          | 2019-02-01 | 2019-02-20 | 15    |
+ | 2          | 2019-02-21 | 2019-03-31 | 30    |
+
+ UnitsSold:
+ | product_id | purchase_date | units |
+ |------------|---------------|-------|
+ | 1          | 2019-02-25    | 100   |  (price=5 → revenue=500)
+ | 1          | 2019-03-01    | 15    |  (price=20 → revenue=300)
+ | 2          | 2019-02-10    | 200   |  (price=15 → revenue=3000)
+ | 2          | 2019-03-22    | 30    |  (price=30 → revenue=900)
+
+ Calculations:
+ Product 1 → revenue = 800, units = 115 → avg = 6.9565 → 6.96
+ Product 2 → revenue = 3900, units = 230 → avg = 16.9565 → 16.96
+
+ Output:
+ | product_id | average_price |
+ |------------|---------------|
+ | 1          | 6.96          |
+ | 2          | 16.96         |
+ */
+
+-- ✅ Final SQL Query
+SELECT 
+    a.product_id,
+    ROUND(
+        CASE
+            WHEN COALESCE(SUM(b.units), 0) = 0 THEN 0
+            ELSE SUM(b.units * a.price) / SUM(b.units)
+        END,
+        2 -- round to 2 decimals
+    ) AS average_price
+FROM Prices AS a
+LEFT JOIN UnitsSold AS b
+    ON a.product_id = b.product_id
+   AND b.purchase_date BETWEEN a.start_date AND a.end_date -- match sale with correct price period
+GROUP BY a.product_id;   -- one row per product
