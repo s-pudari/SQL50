@@ -1,0 +1,60 @@
+/* 
+LeetCode Link: https://leetcode.com/problems/project-employees-i/
+
+Problem Name: Average Experience Years of Employees per Project
+
+Beginner-Friendly Explanation:
+We need to find the average years of experience of employees working on each project.
+- "Project" table shows which employees belong to which project.
+- "Employee" table gives experience_years for each employee.
+We combine both, then calculate average experience per project.
+
+Step-by-Step Approach:
+1. Join Project and Employee on employee_id.
+2. Group results by project_id (since we want per project).
+3. Use AVG(experience_years) to get the mean.
+4. Round to 2 decimal places using ROUND().
+
+Why JOIN is used:
+- Project only has employee_id, not experience.
+- Employee has experience but no project_id.
+- JOIN lets us connect both so we can calculate averages correctly.
+
+Input Example:
+Project:
++-------------+-------------+
+| project_id  | employee_id |
++-------------+-------------+
+| 1           | 1           |
+| 1           | 2           |
+| 1           | 3           |
+| 2           | 1           |
+| 2           | 4           |
++-------------+-------------+
+
+Employee:
++-------------+--------+------------------+
+| employee_id | name   | experience_years |
++-------------+--------+------------------+
+| 1           | Khaled | 3                |
+| 2           | Ali    | 2                |
+| 3           | John   | 1                |
+| 4           | Doe    | 2                |
++-------------+--------+------------------+
+
+Output:
++-------------+---------------+
+| project_id  | average_years |
++-------------+---------------+
+| 1           | 2.00          |
+| 2           | 2.50          |
++-------------+---------------+
+
+SQL Query with Explanation:
+*/
+SELECT a.project_id,
+       ROUND(AVG(b.experience_years), 2) AS average_years
+FROM Project AS a
+JOIN Employee AS b
+  ON a.employee_id = b.employee_id   -- Join both tables to connect project with employee experience
+GROUP BY a.project_id;               -- Group by project to calculate average per project
