@@ -1,0 +1,64 @@
+/* 
+LeetCode Link: https://leetcode.com/problems/queries-quality-and-percentage/
+
+Problem Name: Queries Quality and Poor Query Percentage
+
+Beginner-Friendly Explanation:
+We need to calculate two metrics for each query_name:
+1. Query Quality → average of (rating / position) for that query.
+2. Poor Query Percentage → percentage of queries with rating < 3.
+Finally, both values should be rounded to 2 decimals.
+
+Step-by-Step Approach:
+1. Use AVG(rating/position) to get query quality.
+2. For poor queries:
+   - Check condition rating < 3.
+   - Convert it to 1 if true, 0 if false using IF(rating < 3, 1, 0).
+   - Take AVG of this result → gives fraction of poor queries.
+   - Multiply by 100 to convert fraction into percentage.
+3. ROUND both results to 2 decimals.
+4. Group by query_name since we want per query results.
+
+Why JOIN is NOT needed here:
+- All required data (rating, position, query_name) is in one table.
+- No external reference like Users/Employee table is required.
+
+Input Example:
+Queries table:
++------------+-------------------+----------+--------+
+| query_name | result            | position | rating |
++------------+-------------------+----------+--------+
+| Dog        | Golden Retriever  | 1        | 5      |
+| Dog        | German Shepherd   | 2        | 5      |
+| Dog        | Mule              | 200      | 1      |
+| Cat        | Shirazi           | 5        | 2      |
+| Cat        | Siamese           | 3        | 3      |
+| Cat        | Sphynx            | 7        | 4      |
++------------+-------------------+----------+--------+
+
+Output:
++------------+---------+-----------------------+
+| query_name | quality | poor_query_percentage |
++------------+---------+-----------------------+
+| Dog        | 2.50    | 33.33                 |
+| Cat        | 0.66    | 33.33                 |
++------------+---------+-----------------------+
+
+Explanation:
+- Dog quality = ((5/1) + (5/2) + (1/200)) / 3 = 2.50
+- Dog poor_query_percentage = (1 poor out of 3 total) * 100 = 33.33
+- Cat quality = ((2/5) + (3/3) + (4/7)) / 3 = 0.66
+- Cat poor_query_percentage = (1 poor out of 3 total) * 100 = 33.33
+
+SQL Query with Explanation:
+- ROUND(AVG(rating/position),2) → query quality
+- AVG(IF(rating<3,1,0))*100 → percentage of poor queries
+- WHERE query_name IS NOT NULL → ignore invalid rows if any
+- GROUP BY query_name → aggregate results per query
+*/
+SELECT query_name, 
+       ROUND(AVG(rating/position), 2) AS quality,
+       ROUND(AVG(IF(rating < 3, 1, 0)) * 100, 2) AS poor_query_percentage
+FROM Queries
+WHERE query_name IS NOT NULL
+GROUP BY query_name;
