@@ -1,0 +1,118 @@
+/*
+LeetCode Link: https://leetcode.com/problems/immediate-food-delivery-i/
+
+Problem Name: Immediate Food Delivery I
+
+-- Table Schema
+-- Table: Delivery
+-- +-------------------------------+---------+
+-- | Column Name                   | Type    |
+-- +-------------------------------+---------+
+-- | customer_id                   | int     |
+-- | order_date                    | date    |
+-- | customer_pref_delivery_date   | date    |
+-- +-------------------------------+---------+
+
+Beginner-Friendly Explanation:
+We want the percentage of customers whose *first* order was delivered on their preferred delivery date.
+- First order = earliest order_date per customer.
+- Immediate first order = first order's order_date = customer_pref_delivery_date.
+- Answer = (number of customers with immediate first order) / (total number of customers) * 100,
+  rounded to 2 decimals.
+
+Step-by-Step Approach:
+1) Identify the first order for every customer (use MIN(order_date) grouped by customer_id OR use a window function / ranking).
+2) From those first-order rows, check if order_date = customer_pref_delivery_date (1 if true, 0 otherwise).
+3) Average that 0/1 flag over all customers and multiply by 100 (or use AVG(...) * 100) and ROUND(...,2).
+4) Return the rounded percentage.
+
+Why we use JOIN (and alternatives):
+- Approach-1 uses a JOIN between Delivery and a derived table of first_order per customer to select the first-order rows, then computes the immediate flag.
+- Approach-2 avoids an explicit JOIN by filtering rows with a tuple IN (customer_id, order_date) IN (subquery returning first orders).
+- Approach-3 uses a window function (DENSE_RANK/ROW_NUMBER) to label the first order per customer and then filters to order_rank = 1 — no JOIN required.
+Choose JOIN when you want to explicitly pair full rows with aggregated results; choose window functions for simpler and often more efficient row-ranking solutions when available.
+
+Input Example:
+Delivery
++-------------+------------+------------------------------+
+| customer_id | order_date | customer_pref_delivery_date  |
++-------------+------------+------------------------------+
+| 1           | 2020-01-01 | 2020-01-01                   | -- first order, immediate
+| 1           | 2020-02-01 | 2020-02-01
+| 2           | 2020-03-05 | 2020-03-06                   | -- first order, not immediate
+| 3           | 2020-01-10 | 2020-01-10                   | -- first order, immediate
++-------------+------------+------------------------------+
+
+Output:
+immediate_percentage = ROUND((2 / 3) * 100, 2) = 66.67
+
+----------------------------------------------------------
+-- Approach-1: JOIN with aggregated subquery (MIN per customer)
+-- Good when you want an explicit pairing of original rows with the aggregated "first order" result.
+----------------------------------------------------------
+SELECT 
+  ROUND(AVG(IF(a.order_date = a.customer_pref_delivery_date, 1, 0)) * 100, 2) AS immediate_percentage
+FROM Delivery AS a
+LEFT JOIN (
+  -- derived table: first order date per customer
+  SELECT 
+    customer_id,
+    MIN(order_date) AS first_order
+  FROM Delivery
+  GROUP BY customer_id
+) AS b
+  ON a.customer_id = b.customer_id
+-- keep only the rows that correspond to the customer's first order date
+WHERE a.order_date = b.first_order;
+
+
+----------------------------------------------------------
+-- Approach-2: WHERE (customer_id, order_date) IN (subquery)
+-- Equivalent to Approach-1 semantically; can be slightly more concise.
+-- Some DB engines optimize tuple IN well; in others it acts like a semi-join.
+----------------------------------------------------------
+SELECT 
+  ROUND(AVG(IF(a.order_date = a.customer_pref_delivery_date, 1, 0)) * 100, 2) AS immediate_percentage
+FROM Delivery AS a
+WHERE (a.customer_id, a.order_date) IN (
+  SELECT customer_id, MIN(order_date) AS first_order
+  FROM Delivery
+  GROUP BY customer_id
+);
+
+
+---------------------------------------------------------
+-- Approach-3: Window function (DENSE_RANK or ROW_NUMBER)
+-- Preferred when your DB supports window functions (MySQL 8+, Postgres, SQL Server).
+-- Use ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date) to pick the single earliest row per customer.
+-- DENSE_RANK works too but ROW_NUMBER is more exact if you want exactly one row per customer (even if duplicates exist).
+----------------------------------------------------------
+/* Using DENSE_RANK (keeps ties if multiple rows have the same earliest date):
+   If you want to treat multiple orders on the same earliest date as all "first orders",
+   use DENSE_RANK() and keep rank = 1. If you want exactly one row per customer even
+   when ties exist, use ROW_NUMBER() instead. */
+SELECT 
+  ROUND(AVG(IF(order_date = customer_pref_delivery_date, 1, 0)) * 100, 2) AS immediate_percentage
+FROM (
+  SELECT 
+    *,
+    DENSE_RANK() OVER (PARTITION BY customer_id ORDER BY order_date ASC) AS order_rank
+  FROM Delivery
+) AS b
+WHERE b.order_rank = 1;
+
+
+----------------------------------------------------------
+-- Notes on correctness & performance:
+-- * All three approaches compute the same logical result: evaluate only each customer's earliest order(s),
+--   check if that earliest order is immediate, then compute the percentage.
+-- * Approach-1 (JOIN) and Approach-2 (tuple IN) rely on the aggregation subquery; they are portable and work on
+--   older MySQL versions that lack window functions.
+-- * Approach-3 (window functions) is often more readable and can be more efficient because it avoids materializing
+--   the grouped subquery and lets the query engine compute ranks in one pass. Use ROW_NUMBER() if you want exactly
+--   one "first row" per customer when multiple identical earliest dates exist.
+-- * If there are many rows per customer and your DB supports window functions, prefer Approach-3.
+-- * If you need to treat multiple earliest orders on the same date as multiple "first orders", use DENSE_RANK (as above).
+-- * If you need exactly one row per customer even when earliest dates tie, replace DENSE_RANK() with ROW_NUMBER().
+
+-- End of structured answer (all content embedded as comments + example queries).
