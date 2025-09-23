@@ -1,0 +1,61 @@
+/*
+LeetCode Link: https://leetcode.com/problems/managers-with-direct-reports/
+
+Problem Name: Managers With Direct Reports
+
+Beginner-Friendly Explanation:
+We need to find all managers who have at least one employee reporting to them.
+For each manager, report:
+1. employee_id
+2. name
+3. number of direct reports (reports_count)
+4. average age of direct reports (rounded to nearest integer)
+
+Step-by-Step Approach:
+1. Perform a self-join on the Employees table:
+   - a = employee (reports)
+   - b = manager (reports_to = b.employee_id)
+2. COUNT(a.reports_to) → gives number of direct reports for each manager.
+3. AVG(a.age) → gives average age of the reports; ROUND(...,0) rounds to nearest integer.
+4. GROUP BY manager's employee_id and name to aggregate reports info.
+5. ORDER BY employee_id as required.
+
+Why JOIN is used:
+- We need manager info (employee_id, name) and also info about employees reporting to them (age), which are in the same table.
+- A self-join connects employees to their managers.
+
+Input Example:
+Employees table:
++-------------+---------+------------+-----+
+| employee_id | name    | reports_to | age |
++-------------+---------+------------+-----+
+| 9           | Hercy   | null       | 43  |
+| 6           | Alice   | 9          | 41  |
+| 4           | Bob     | 9          | 36  |
+| 2           | Winston | null       | 37  |
++-------------+---------+------------+-----+
+
+Output:
++-------------+-------+---------------+-------------+
+| employee_id | name  | reports_count | average_age |
++-------------+-------+---------------+-------------+
+| 9           | Hercy | 2             | 39          |
++-------------+-------+---------------+-------------+
+
+SQL Query with Explanation:
+- INNER JOIN Employees a (reports) with b (managers) on a.reports_to = b.employee_id
+- COUNT(a.reports_to) gives number of reports
+- ROUND(AVG(a.age),0) gives average age rounded
+- GROUP BY b.employee_id, b.name to aggregate
+- ORDER BY b.employee_id to satisfy output order
+*/
+
+SELECT b.employee_id,
+       b.name,
+       COUNT(a.reports_to) AS reports_count,
+       ROUND(AVG(a.age),0) AS average_age
+FROM Employees AS a
+INNER JOIN Employees AS b
+ON a.reports_to = b.employee_id
+GROUP BY b.employee_id, b.name
+ORDER BY b.employee_id;
