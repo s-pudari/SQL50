@@ -1,0 +1,57 @@
+/*  
+Problem: Classes With At Least 5 Students  
+LeetCode Link: https://leetcode.com/problems/classes-more-than-5-students/  
+
+📝 Problem Explanation:  
+We are given a `Courses` table with two columns: `student` and `class`.  
+- Each row shows which student is enrolled in which class.  
+- The goal is to **find all classes that have at least 5 students**.  
+
+---
+
+🔎 Step-by-Step Approach:  
+1. Group the data by `class` because we want to analyze student counts per class.  
+2. Use `COUNT(student)` (or `COUNT(*)`) to count how many students are in each class.  
+3. Apply the `HAVING` clause to filter only those groups where the count is **≥ 5**.  
+
+---
+
+
+
+
+✅ Input Example:  
+Courses table:  
++---------+----------+  
+| student | class    |  
++---------+----------+  
+| A       | Math     |  
+| B       | English  |  
+| C       | Math     |  
+| D       | Biology  |  
+| E       | Math     |  
+| F       | Computer |  
+| G       | Math     |  
+| H       | Math     |  
+| I       | Math     |  
++---------+----------+  
+
+✅ Output Example:  
++---------+  
+| class   |  
++---------+  
+| Math    |  
++---------+  
+
+Explanation:  
+- Math has 6 students → included.  
+- All other classes have fewer than 5 students → excluded.  
+
+---
+
+💻 Final SQL Query:  
+*/
+SELECT 
+    class
+FROM Courses
+GROUP BY class
+HAVING COUNT(student) >= 5;   -- only keep classes with at least 5 students
