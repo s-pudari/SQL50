@@ -1,0 +1,54 @@
+/*  
+Problem: Count Unique Subjects Taught by Each Teacher  
+LeetCode Link: https://leetcode.com/problems/count-student-number-in-departments/ (similar style problem)  
+
+📝 Problem Explanation:  
+We are given a table `Teacher` where each row tells us that a teacher teaches a subject in a particular department.  
+Since `(subject_id, dept_id)` is the primary key, the same subject can appear multiple times across different departments for the same teacher.  
+
+👉 Task:  
+For each teacher, count how many **unique subjects** they teach (ignoring the department).  
+
+---
+
+### Approach: Using COUNT(DISTINCT)
+
+
+✅ Why DISTINCT is needed?  
+If the same teacher teaches the same subject in multiple departments, we must count it only once.  
+For example: Teacher 1 teaches subject 2 in dept 3 and dept 4 → still counted as **1 subject**.  
+
+---
+
+### Dry Run Example:  
+
+Input Table:  
+| teacher_id | subject_id | dept_id |  
+|------------|------------|---------|  
+| 1          | 2          | 3       |  
+| 1          | 2          | 4       |  
+| 1          | 3          | 3       |  
+| 2          | 1          | 1       |  
+| 2          | 2          | 1       |  
+| 2          | 3          | 1       |  
+| 2          | 4          | 1       |  
+
+Step-by-step:  
+- Teacher 1 → {2, 3} → 2 unique subjects  
+- Teacher 2 → {1, 2, 3, 4} → 4 unique subjects  
+
+Output:  
+| teacher_id | cnt |  
+|------------|-----|  
+| 1          | 2   |  
+| 2          | 4   |  
+
+---
+
+### Final SQL Query:
+*/
+SELECT 
+    teacher_id, 
+    COUNT(DISTINCT subject_id) AS cnt
+FROM Teacher
+GROUP BY teacher_id;
