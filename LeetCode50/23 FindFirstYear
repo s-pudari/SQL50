@@ -1,0 +1,65 @@
+/*  
+Problem: Sales Analysis – Find First Year Sales  
+LeetCode Link: https://leetcode.com/problems/sales-analysis-i  
+
+📝 Problem Explanation:  
+We are given a `Sales` table that records product sales each year.  
+Each row includes `product_id`, `year`, `quantity`, and `price`.  
+
+The task:  
+- For each product, find the **earliest year** it was sold.  
+- Return **all sales entries** for that product in that year.  
+- Output columns: `product_id`, `first_year`, `quantity`, `price`.  
+
+---
+
+🔎 Step-by-Step Approach:  
+1. Identify the **first year of sale per product** using `MIN(year)` grouped by `product_id`.  
+2. Match this `(product_id, year)` pair with the main `Sales` table to fetch **all rows** for that product in its first year.  
+3. Rename `year` as `first_year` in the final result for clarity.  
+
+---
+
+📌 Why we use a JOIN (or IN)?  
+- The `Sales` table contains multiple years of data.  
+- We need to restrict results to only the **earliest year per product**.  
+- This requires comparing each product’s sales to an aggregated subquery (`MIN(year)`).  
+- Without a join/subquery, we cannot filter only the first-year sales.  
+
+---
+
+✅ Input Example:  
+Sales table:  
++---------+------------+------+----------+-------+  
+| sale_id | product_id | year | quantity | price |  
++---------+------------+------+----------+-------+  
+| 1       | 100        | 2008 | 10       | 5000  |  
+| 2       | 100        | 2009 | 12       | 5000  |  
+| 3       | 200        | 2010 | 15       | 9000  |  
++---------+------------+------+----------+-------+  
+
+✅ Output Example:  
++------------+------------+----------+-------+  
+| product_id | first_year | quantity | price |  
++------------+------------+----------+-------+  
+| 100        | 2008       | 10       | 5000  |  
+| 200        | 2010       | 15       | 9000  |  
++------------+------------+----------+-------+  
+
+---
+
+💻 Final SQL Query:  
+*/
+SELECT 
+    product_id, 
+    year AS first_year,         -- rename year to first_year  
+    quantity, 
+    price
+FROM Sales
+WHERE (product_id, year) IN (
+    SELECT 
+        product_id, 
+        MIN(year)              -- find the earliest year for each product
+    FROM Sales
+    GROUP BY product_id
+);
