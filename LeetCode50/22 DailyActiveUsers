@@ -1,0 +1,59 @@
+/*  
+Problem: Daily Active Users (30-Day Window)  
+LeetCode Link: https://leetcode.com/problems/daily-active-users  
+
+📝 Problem Explanation:  
+We are given a social media `Activity` table that logs user activities such as opening sessions, sending messages, etc.  
+A user is considered *active* on a day if they performed **at least one activity** on that date.  
+
+We need to find the **daily active user count** for each day within the 30-day period ending on `2019-07-27`.  
+Only days where at least one user was active should be returned.  
+
+---
+
+🔎 Step-by-Step Approach:  
+1. Select the `activity_date` to represent the day.  
+2. Use `COUNT(DISTINCT user_id)` to ensure each user is counted once per day (even if they performed multiple activities).  
+3. Apply a `WHERE` filter to restrict the results to the date range `2019-06-28` to `2019-07-27`.  
+   - This ensures exactly 30 days ending with `2019-07-27`.  
+4. Group by `activity_date` so we can calculate the active users per day.  
+5. Return the results with columns renamed as `day` and `active_users`.  
+
+---
+
+📌 Why we don’t need JOIN here?  
+- All the necessary information (`user_id`, `activity_date`) is available within a **single table (`Activity`)**.  
+- Hence, we can solve this directly with aggregation (`COUNT DISTINCT`) and filtering.  
+
+---
+
+✅ Input Example:  
+Activity table:  
++---------+------------+---------------+---------------+  
+| user_id | session_id | activity_date | activity_type |  
++---------+------------+---------------+---------------+  
+| 1       | 1          | 2019-07-20    | open_session  |  
+| 1       | 1          | 2019-07-20    | scroll_down   |  
+| 2       | 4          | 2019-07-21    | send_message  |  
+| 3       | 2          | 2019-07-21    | end_session   |  
+| 4       | 3          | 2019-06-25    | open_session  |  
++---------+------------+---------------+---------------+  
+
+✅ Output Example:  
++------------+--------------+  
+| day        | active_users |  
++------------+--------------+  
+| 2019-07-20 | 2            |  
+| 2019-07-21 | 2            |  
++------------+--------------+  
+
+---
+
+💻 Final SQL Query:  
+*/
+SELECT 
+    activity_date AS day,                               -- rename activity_date as 'day' in output
+    COUNT(DISTINCT user_id) AS active_users             -- count unique users per day
+FROM Activity
+WHERE activity_date BETWEEN '2019-06-28' AND '2019-07-27' -- restrict to last 30 days
+GROUP BY activity_date;                                 -- group by each day to count users
