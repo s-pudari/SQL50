@@ -1,0 +1,79 @@
+/*
+LeetCode Link: https://leetcode.com/problems/primary-department-for-each-employee/
+
+Problem Name: Primary Department for Each Employee
+
+Beginner-Friendly Explanation:
+Employees can belong to multiple departments. 
+- If an employee belongs to only one department, that department is automatically their "primary" even if primary_flag = 'N'.
+- If an employee belongs to multiple departments, only the one with primary_flag = 'Y' should be reported as their primary.
+
+So the query must:
+1. Handle employees with just one department → return that department.
+2. Handle employees with multiple departments → return the department where primary_flag = 'Y'.
+
+Step-by-Step Approach:
+1. Build a subquery that counts the number of departments per employee.
+2. JOIN this subquery back to the Employee table.
+3. Use conditions:
+   - If count = 1 → return that row (only department available).
+   - If count > 1 → return the row where primary_flag = 'Y'.
+
+Why we use JOIN:
+- We need both per-employee aggregated info (department count) and detailed row info (department_id and primary_flag).
+- The aggregated subquery provides department counts per employee.
+- The JOIN allows combining that with row-level data so we can filter properly.
+- Without JOIN, we couldn't know both "department count" and row details in the same query.
+
+Input Example:
+Employee table:
++-------------+---------------+--------------+
+| employee_id | department_id | primary_flag |
++-------------+---------------+--------------+
+| 1           | 1             | N            |
+| 2           | 1             | Y            |
+| 2           | 2             | N            |
+| 3           | 3             | N            |
+| 4           | 2             | N            |
+| 4           | 3             | Y            |
+| 4           | 4             | N            |
++-------------+---------------+--------------+
+
+Output:
++-------------+---------------+
+| employee_id | department_id |
++-------------+---------------+
+| 1           | 1             |
+| 2           | 1             |
+| 3           | 3             |
+| 4           | 3             |
++-------------+---------------+
+
+Explanation:
+- Employee 1: Only one dept → dept 1.
+- Employee 2: Two depts → primary is dept 1.
+- Employee 3: Only one dept → dept 3.
+- Employee 4: Three depts → primary is dept 3.
+
+----------------------------------------------------------
+SQL Query with Detailed Inline Comments
+----------------------------------------------------------
+*/
+SELECT 
+    a.employee_id, 
+    a.department_id
+FROM Employee AS a
+LEFT JOIN (
+    -- Subquery: count number of departments per employee
+    SELECT 
+        employee_id,
+        COUNT(department_id) AS dept_count
+    FROM Employee
+    GROUP BY employee_id
+) AS b
+  ON a.employee_id = b.employee_id
+WHERE 
+    -- Case 1: employee has only one department → take it
+    b.dept_count = 1
+    -- Case 2: employee has multiple departments → take the 'Y' flagged one
+    OR (b.dept_count > 1 AND a.primary_flag = 'Y');
